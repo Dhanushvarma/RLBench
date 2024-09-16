@@ -306,7 +306,7 @@ class Scene(object):
                 if self._obs_config.gripper_joint_positions else None),
             task_low_dim_state=(
                 self.task.get_low_dim_state() if
-                self._obs_config.task_low_dim_state else None),
+                self._obs_config.task_low_dim_state else None), # for reach_target task, it just returns the target position in 3D space
             misc=self._get_misc())
         obs = self.task.decorate_observation(obs)
         return obs
