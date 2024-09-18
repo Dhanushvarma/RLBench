@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 from rlbench.backend.camera_utils import project_points_from_world_to_camera, get_transform_matrix
 
-env = gym.make('rlbench/lift_numbered_block-vision-v0', render_mode="rgb_array")
+env = gym.make('rlbench/reach_target-vision-v0', render_mode="rgb_array")
 intrinsics = env.intrinsic_matrix
 extrinsics = env.extrinsic_matrix
 transform = get_transform_matrix(extrinsics, intrinsics)
