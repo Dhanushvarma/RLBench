@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 from rlbench.backend.camera_utils import project_points_from_world_to_camera, get_transform_matrix
 
-env = gym.make('rlbench/reach_target-vision-v0', render_mode="rgb_array")
+env = gym.make('rlbench/lift_numbered_block-vision-v0', render_mode="rgb_array")
 intrinsics = env.intrinsic_matrix
 extrinsics = env.extrinsic_matrix
 transform = get_transform_matrix(extrinsics, intrinsics)
@@ -22,7 +22,7 @@ for i in range(training_steps):
     frame = env.render()  # Note: rendering increases step time.
     # draw a circle on the image at gripper position
     gripper_pose = obs['gripper_pose'][:3]
-    goal = obs['task_low_dim_state']
+    goal = obs['task_low_dim_state'][:3]
     gripper_pose = gripper_pose.reshape(1, 3)
     goal = goal.reshape(1, 3)
     final_gripper = project_points_from_world_to_camera(gripper_pose, transform, 360, 640)[:, ::-1] 

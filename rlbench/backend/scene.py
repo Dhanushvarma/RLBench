@@ -308,6 +308,7 @@ class Scene(object):
                 self.task.get_low_dim_state() if
                 self._obs_config.task_low_dim_state else None), # for reach_target task, it just returns the target position in 3D space
             misc=self._get_misc())
+        # import ipdb; ipdb.set_trace()
         obs = self.task.decorate_observation(obs)
         return obs
 
