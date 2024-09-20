@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 from rlbench.backend.camera_utils import project_points_from_world_to_camera, get_transform_matrix
 
-env = gym.make('rlbench/reach_target-vision-v0', render_mode="rgb_array")
+env = gym.make('rlbench/pick_block-vision-v0', render_mode="rgb_array")
 intrinsics = env.intrinsic_matrix
 extrinsics = env.extrinsic_matrix
 transform = get_transform_matrix(extrinsics, intrinsics)
@@ -18,6 +18,7 @@ for i in range(training_steps):
     if i % episode_length == 0:
         print('Reset Episode')
         obs = env.reset()
+    import ipdb; ipdb.set_trace()
     obs, reward, terminate, _, _ = env.step(env.action_space.sample())
     frame = env.render()  # Note: rendering increases step time.
     # draw a circle on the image at gripper position
