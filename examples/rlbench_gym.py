@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 from rlbench.backend.camera_utils import project_points_from_world_to_camera, get_transform_matrix
 
+# import ipdb; ipdb.set_trace()
 env = gym.make('rlbench/pick_block-vision-v0', render_mode="rgb_array")
 intrinsics = env.intrinsic_matrix
 extrinsics = env.extrinsic_matrix
@@ -18,20 +19,21 @@ for i in range(training_steps):
     if i % episode_length == 0:
         print('Reset Episode')
         obs = env.reset()
-    import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
     obs, reward, terminate, _, _ = env.step(env.action_space.sample())
     frame = env.render()  # Note: rendering increases step time.
     # draw a circle on the image at gripper position
     gripper_pose = obs['gripper_pose'][:3]
-    goal = obs['task_low_dim_state'][:3]
     gripper_pose = gripper_pose.reshape(1, 3)
-    goal = goal.reshape(1, 3)
     final_gripper = project_points_from_world_to_camera(gripper_pose, transform, 360, 640)[:, ::-1] 
     final_int_gripper = final_gripper.astype(int).squeeze()
-    final_goal = project_points_from_world_to_camera(goal, transform, 360, 640)[:, ::-1]
-    final_int_goal = final_goal.astype(int).squeeze()
     cv2.circle(frame, final_int_gripper, 5, (0, 255, 0), -1)
-    cv2.circle(frame, final_int_goal, 5, (0, 0, 255), -1)
+    for x in [3, 2]:
+        goal = obs['task_low_dim_state'][7*x:7*x+3]
+        goal = goal.reshape(1, 3)
+        final_goal = project_points_from_world_to_camera(goal, transform, 360, 640)[:, ::-1]
+        final_int_goal = final_goal.astype(int).squeeze()
+        cv2.circle(frame, final_int_goal, 5, (0, 0, 255), -1)
     video_writer.append_data(frame)
 print('Done')
 video_writer.close()
