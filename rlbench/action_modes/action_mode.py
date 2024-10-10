@@ -44,6 +44,10 @@ class MoveArmThenGripper(ActionMode):
     def action_shape(self, scene: Scene):
         return np.prod(self.arm_action_mode.action_shape(scene)) + np.prod(
             self.gripper_action_mode.action_shape(scene))
+    
+    def action_bounds(self):
+        """Returns the min and max of the action mode."""
+        return np.array(7 * [-0.1] + [0.0]), np.array(7 * [0.1] + [1.0])
 
 
 # RLBench is highly customizable, in both observations and action modes.
