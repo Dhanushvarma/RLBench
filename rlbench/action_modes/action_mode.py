@@ -128,8 +128,8 @@ class EEFPositionActionMode(ActionMode):
         ]
         upper_bound = [
             scene._workspace_maxx,
-            scene._workspace_maxx,
-            scene._workspace_maxx,
+            scene._workspace_maxy,
+            scene._workspace_maxz,
             1,
             1,
             1,
