@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def pose_inv(pose):
     """
     Computes the inverse of a homogeneous matrix corresponding to the pose of some
@@ -12,7 +13,7 @@ def pose_inv(pose):
         np.array: 4x4 matrix for the inverse pose
     """
 
-    # Note, the inverse of a pose matrix is the following
+    # NOTE : the inverse of a pose matrix is the following
     # [R t; 0 1]^-1 = [R.T -R.T*t; 0 1]
 
     # Intuitively, this makes sense.
@@ -28,7 +29,10 @@ def pose_inv(pose):
     pose_inv[3, 3] = 1.0
     return pose_inv
 
-def project_points_from_world_to_camera(points, world_to_camera_transform, camera_height, camera_width):
+
+def project_points_from_world_to_camera(
+    points, world_to_camera_transform, camera_height, camera_width
+):
     """
     Helper function to project a batch of points in the world frame
     into camera pixels using the world to camera transformation.
@@ -46,7 +50,10 @@ def project_points_from_world_to_camera(points, world_to_camera_transform, camer
     """
     assert points.shape[-1] == 3  # last dimension must be 3D
     assert len(world_to_camera_transform.shape) == 2
-    assert world_to_camera_transform.shape[0] == 4 and world_to_camera_transform.shape[1] == 4
+    assert (
+        world_to_camera_transform.shape[0] == 4
+        and world_to_camera_transform.shape[1] == 4
+    )
 
     # convert points to homogenous coordinates -> (px, py, pz, 1)
     ones_pad = np.ones(points.shape[:-1] + (1,))
@@ -99,7 +106,9 @@ def transform_from_pixels_to_world(pixels, depth_map, camera_to_world_transform)
     pixels = pixels.astype(float)
     im_h, im_w = depth_map.shape[-2:]
     depth_map_reshaped = depth_map.reshape(-1, im_h, im_w, 1)
-    z = bilinear_interpolate(im=depth_map_reshaped, x=pixels[..., 1:2], y=pixels[..., 0:1])
+    z = bilinear_interpolate(
+        im=depth_map_reshaped, x=pixels[..., 1:2], y=pixels[..., 0:1]
+    )
     z = z.reshape(*depth_map_leading_shape, 1)  # shape [..., 1]
 
     # form 4D homogenous camera vector to transform - [x * z, y * z, z, 1]
@@ -113,6 +122,7 @@ def transform_from_pixels_to_world(pixels, depth_map, camera_to_world_transform)
     cam_trans = camera_to_world_transform.reshape(mat_reshape)  # shape [..., 4, 4]
     points = np.matmul(cam_trans, cam_pts[..., None])[..., 0]  # shape [..., 4]
     return points[..., :3]
+
 
 def bilinear_interpolate(im, x, y):
     """
@@ -144,6 +154,7 @@ def bilinear_interpolate(im, x, y):
 
     return wa * Ia + wb * Ib + wc * Ic + wd * Id
 
+
 def get_transform_matrix(extrinsics, intrinsics):
     R = extrinsics
     K = intrinsics
@@ -154,4 +165,3 @@ def get_transform_matrix(extrinsics, intrinsics):
     transform = K_exp @ pose_inv(R)
 
     return transform
-

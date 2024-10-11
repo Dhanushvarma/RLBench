@@ -47,6 +47,7 @@ class MoveArmThenGripper(ActionMode):
     
     def action_bounds(self):
         """Returns the min and max of the action mode."""
+        # TODO(dhanush) : this only makes sense when JointActionMode is delta and GripperActionMode is absolute  
         return np.array(7 * [-0.1] + [0.0]), np.array(7 * [0.1] + [1.0])
 
 
