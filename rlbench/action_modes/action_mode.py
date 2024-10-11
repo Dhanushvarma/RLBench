@@ -3,7 +3,7 @@ from abc import abstractmethod
 import numpy as np
 
 from rlbench.action_modes.arm_action_modes import ArmActionMode, JointPosition, EndEffectorPoseViaPlanning, RelativeFrame
-from rlbench.action_modes.gripper_action_modes import GripperActionMode, GripperJointPosition
+from rlbench.action_modes.gripper_action_modes import GripperActionMode, GripperJointPosition, Discrete
 from rlbench.backend.scene import Scene
 
 
@@ -80,7 +80,7 @@ class JointPositionActionMode(ActionMode):
 
 class EEFPositionActionMode(ActionMode):
     """
-    A pre-set, absolute end-effector position action mode and also absolute for gripper.
+    A pre-set, absolute end-effector position action mode, discrete for gripper.
 
     The arm action is first applied, followed by the gripper action.
 
@@ -92,7 +92,7 @@ class EEFPositionActionMode(ActionMode):
             EndEffectorPoseViaPlanning(
                 absolute_mode=True, frame=RelativeFrame.WORLD, collision_checking=False
             ),
-            GripperJointPosition(True),
+            Discrete(True),
         )
 
     def action(self, scene: Scene, action: np.ndarray):
