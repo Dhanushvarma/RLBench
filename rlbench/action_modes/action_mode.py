@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 import numpy as np
 
-from rlbench.action_modes.arm_action_modes import ArmActionMode, JointPosition
+from rlbench.action_modes.arm_action_modes import ArmActionMode, JointPosition, EndEffectorPoseViaPlanning, RelativeFrame
 from rlbench.action_modes.gripper_action_modes import GripperActionMode, GripperJointPosition
 from rlbench.backend.scene import Scene
 
@@ -44,11 +44,6 @@ class MoveArmThenGripper(ActionMode):
     def action_shape(self, scene: Scene):
         return np.prod(self.arm_action_mode.action_shape(scene)) + np.prod(
             self.gripper_action_mode.action_shape(scene))
-    
-    def action_bounds(self):
-        """Returns the min and max of the action mode."""
-        # TODO(dhanush) : this only makes sense when JointActionMode is delta and GripperActionMode is absolute  
-        return np.array(7 * [-0.1] + [0.0]), np.array(7 * [0.1] + [1.0])
 
 
 # RLBench is highly customizable, in both observations and action modes.
@@ -82,3 +77,64 @@ class JointPositionActionMode(ActionMode):
     def action_bounds(self):
         """Returns the min and max of the action mode."""
         return np.array(7 * [-0.1] + [0.0]), np.array(7 * [0.1] + [0.04])
+
+class EEFPositionActionMode(ActionMode):
+    """
+    A pre-set, absolute end-effector position action mode and also absolute for gripper.
+
+    The arm action is first applied, followed by the gripper action.
+
+    IMP : end-effector position is in world frame
+    """
+
+    def __init__(self):
+        super(EEFPositionActionMode, self).__init__(
+            EndEffectorPoseViaPlanning(
+                absolute_mode=True, frame=RelativeFrame.WORLD, collision_checking=False
+            ),
+            GripperJointPosition(True),
+        )
+
+    def action(self, scene: Scene, action: np.ndarray):
+        arm_act_size = np.prod(self.arm_action_mode.action_shape(scene))
+        arm_action = np.array(action[:arm_act_size])
+        ee_action = np.array(
+            action[arm_act_size:]
+        )  # NOTE : in our case ee pertains to gripper
+        self.arm_action_mode.action(scene, arm_action)
+        self.gripper_action_mode.action(scene, ee_action)
+
+    def action_shape(self, scene: Scene):
+        return np.prod(self.arm_action_mode.action_shape(scene)) + np.prod(
+            self.gripper_action_mode.action_shape(scene)
+        )
+
+    def action_bounds(self, scene: Scene):
+        """
+        quat components are in the range [-1, 1]
+        """
+        lower_bound_gripper, upper_bound_gripper = (
+            self.gripper_action_mode.action_bounds()
+        )
+        lower_bound = [
+            scene._workspace_minx,
+            scene._workspace_miny,
+            scene._workspace_minz,
+            -1,
+            -1,
+            -1,
+            -1,
+            lower_bound_gripper,
+        ]
+        upper_bound = [
+            scene._workspace_maxx,
+            scene._workspace_maxx,
+            scene._workspace_maxx,
+            1,
+            1,
+            1,
+            1,
+            upper_bound_gripper,
+        ]
+
+        return np.array(lower_bound), np.array(upper_bound)
