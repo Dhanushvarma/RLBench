@@ -8,7 +8,7 @@ from pyrep.const import RenderMode
 
 import rlbench.backend.task as task
 from rlbench import ObservationConfig
-from rlbench.action_modes.action_mode import MoveArmThenGripper
+from rlbench.action_modes.action_mode import EEFPositionActionMode, MoveArmThenGripper
 from rlbench.action_modes.arm_action_modes import (
     EndEffectorPoseViaIK,
     EndEffectorPoseViaPlanning,
@@ -74,7 +74,7 @@ def run(i, lock, task_index, variation_count, results, file_lock, tasks, args):
 
     print("Arm action mode: ", args.arm_action_mode)
     rlbench_env = Environment(
-        action_mode=MoveArmThenGripper(arm_action_mode, Discrete()),
+        action_mode=EEFPositionActionMode(),
         # action_mode=MoveArmThenGripper(JointVelocity(), Discrete()),
         obs_config=obs_config,
         arm_max_velocity=args.arm_max_velocity,

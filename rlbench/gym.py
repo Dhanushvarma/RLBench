@@ -3,39 +3,45 @@ from typing import Union
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
+from pyrep.const import RenderMode
 from pyrep.objects.dummy import Dummy
 from pyrep.objects.vision_sensor import VisionSensor
-from pyrep.const import RenderMode
-
 
 from rlbench.action_modes.action_mode import JointPositionActionMode
 from rlbench.environment import Environment
 from rlbench.observation_config import ObservationConfig
+
 
 def convert_dtype_to_float32_if_float(dtype):
     if issubclass(dtype.type, np.floating):
         return np.float32
     return dtype
 
+
 class RLBenchEnv(gym.Env):
     """An gym wrapper for RLBench."""
+
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
 
-    def __init__(self, task_class, observation_mode='state',
-                 render_mode: Union[None, str] = None, action_mode=None):
+    def __init__(
+        self,
+        task_class,
+        observation_mode="state",
+        render_mode: Union[None, str] = None,
+        action_mode=None,
+    ):
         self.task_class = task_class
         self.observation_mode = observation_mode
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
         obs_config = ObservationConfig()
-        if observation_mode == 'state':
+        if observation_mode == "state":
             obs_config.set_all_high_dim(False)
             obs_config.set_all_low_dim(True)
-        elif observation_mode == 'vision':
+        elif observation_mode == "vision":
             obs_config.set_all(True)
         else:
-            raise ValueError(
-                'Unrecognised observation_mode: %s.' % observation_mode)
+            raise ValueError("Unrecognised observation_mode: %s." % observation_mode)
         self.obs_config = obs_config
         if action_mode is None:
             action_mode = JointPositionActionMode()
@@ -46,6 +52,7 @@ class RLBenchEnv(gym.Env):
             obs_config=self.obs_config,
             headless=True,
         )
+
         self.rlbench_env.launch()
         self.rlbench_task_env = self.rlbench_env.get_task(self.task_class)
         if render_mode is not None:
@@ -59,46 +66,65 @@ class RLBenchEnv(gym.Env):
         _, obs = self.rlbench_task_env.reset()
 
         gym_obs = self._extract_obs(obs)
-        self.camera_xyz = self.gym_cam.get_position()  # gives first 3 elements of the pose, excluding the quaternion
+        self.camera_xyz = (
+            self.gym_cam.get_position()
+        )  # gives first 3 elements of the pose, excluding the quaternion
         self.extrinsic_matrix = self.gym_cam.get_matrix()  # extrinsic matrix
         self.intrinsic_matrix = self.gym_cam.get_intrinsic_matrix()  # intrinsic matrix
         self.observation_space = {}
         for key, value in gym_obs.items():
             if "rgb" in key:
                 self.observation_space[key] = spaces.Box(
-                    low=0, high=255, shape=value.shape, dtype=value.dtype)
+                    low=0, high=255, shape=value.shape, dtype=value.dtype
+                )
             else:
                 self.observation_space[key] = spaces.Box(
-                    low=-np.inf, high=np.inf, shape=value.shape, dtype=value.dtype)
+                    low=-np.inf, high=np.inf, shape=value.shape, dtype=value.dtype
+                )
         self.observation_space = spaces.Dict(self.observation_space)
 
-        action_low, action_high = action_mode.action_bounds()
+        action_low, action_high = action_mode.action_bounds(self.rlbench_env._scene)
         self.action_space = spaces.Box(
-            low=np.float32(action_low), high=np.float32(action_high), shape=self.rlbench_env.action_shape, dtype=np.float32)
+            low=np.float32(action_low),
+            high=np.float32(action_high),
+            shape=self.rlbench_env.action_shape,
+            dtype=np.float32,
+        )
 
     def _extract_obs(self, rlbench_obs):
-        gym_obs = {} 
-        for state_name in ["joint_velocities", "joint_positions", "joint_forces", "gripper_open", "gripper_pose", "gripper_joint_positions", "gripper_touch_forces", "task_low_dim_state"]:
+        gym_obs = {}
+        for state_name in [
+            "joint_velocities",
+            "joint_positions",
+            "joint_forces",
+            "gripper_open",
+            "gripper_pose",
+            "gripper_joint_positions",
+            "gripper_touch_forces",
+            "task_low_dim_state",
+        ]:
             state_data = getattr(rlbench_obs, state_name)
             if state_data is not None:
                 state_data = np.float32(state_data)
                 if np.isscalar(state_data):
                     state_data = np.asarray([state_data])
                 gym_obs[state_name] = state_data
-                
-        if self.observation_mode == 'vision':
-            gym_obs.update({
-                "left_shoulder_rgb": rlbench_obs.left_shoulder_rgb,
-                "right_shoulder_rgb": rlbench_obs.right_shoulder_rgb,
-                "wrist_rgb": rlbench_obs.wrist_rgb,
-                "front_rgb": rlbench_obs.front_rgb,
-            })
+
+        if self.observation_mode == "vision":
+            gym_obs.update(
+                {
+                    "left_shoulder_rgb": rlbench_obs.left_shoulder_rgb,
+                    "right_shoulder_rgb": rlbench_obs.right_shoulder_rgb,
+                    "wrist_rgb": rlbench_obs.wrist_rgb,
+                    "front_rgb": rlbench_obs.front_rgb,
+                }
+            )
         return gym_obs
 
     def render(self):
-        if self.render_mode == 'rgb_array':
+        if self.render_mode == "rgb_array":
             frame = self.gym_cam.capture_rgb()
-            frame = np.clip((frame * 255.).astype(np.uint8), 0, 255)
+            frame = np.clip((frame * 255.0).astype(np.uint8), 0, 255)
             return frame
 
     def reset(self, seed=None, options=None):
@@ -122,5 +148,3 @@ class RLBenchEnv(gym.Env):
 
     def close(self) -> None:
         self.rlbench_env.shutdown()
-        
-
