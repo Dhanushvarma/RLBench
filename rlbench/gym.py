@@ -59,9 +59,9 @@ class RLBenchEnv(gym.Env):
         _, obs = self.rlbench_task_env.reset()
 
         gym_obs = self._extract_obs(obs)
-        self.camera_xyz = self.gym_cam.get_position() # gives first 3 elements of the pose, excluding the quaternion
-        self.extrinsic_matrix = self.gym_cam.get_matrix() # extrinsic matrix
-        self.intrinsic_matrix = self.gym_cam.get_intrinsic_matrix() # intrinsic matrix
+        self.camera_xyz = self.gym_cam.get_position()  # gives first 3 elements of the pose, excluding the quaternion
+        self.extrinsic_matrix = self.gym_cam.get_matrix()  # extrinsic matrix
+        self.intrinsic_matrix = self.gym_cam.get_intrinsic_matrix()  # intrinsic matrix
         self.observation_space = {}
         for key, value in gym_obs.items():
             if "rgb" in key:
