@@ -10,7 +10,7 @@ from pyrep.const import RenderMode
 import rlbench.backend.task as task
 from rlbench import ObservationConfig
 from rlbench.action_modes.action_mode import MoveArmThenGripper
-from rlbench.action_modes.arm_action_modes import JointPosition
+from rlbench.action_modes.arm_action_modes import JointPosition, EndEffectorPoseViaPlanning, EndEffectorPoseViaIK
 from rlbench.action_modes.gripper_action_modes import Discrete
 from rlbench.backend import utils
 from rlbench.backend.const import *
@@ -182,13 +182,24 @@ def run(i, lock, task_index, variation_count, results, file_lock, tasks, args):
         obs_config.wrist_camera.render_mode = RenderMode.OPENGL3
         obs_config.front_camera.render_mode = RenderMode.OPENGL3
 
-    rlbench_env = Environment(
-        action_mode=MoveArmThenGripper(JointPosition(), Discrete()),
-        obs_config=obs_config,
-        arm_max_velocity=args.arm_max_velocity,
-        arm_max_acceleration=args.arm_max_acceleration,
-        headless=True,
-    )
+    if args.arm_action_mode == "joint_position":
+        rlbench_env = Environment(
+            action_mode=MoveArmThenGripper(JointPosition(), Discrete()),
+            obs_config=obs_config,
+            arm_max_velocity=args.arm_max_velocity,
+            arm_max_acceleration=args.arm_max_acceleration,
+            headless=True,
+        )
+    elif args.arm_action_mode == "end_effector_pose":
+        rlbench_env = Environment(
+            action_mode=MoveArmThenGripper(
+                EndEffectorPoseViaIK(absolute_mode=False), Discrete()
+            ),
+            obs_config=obs_config,
+            arm_max_velocity=args.arm_max_velocity,
+            arm_max_acceleration=args.arm_max_acceleration,
+            headless=True,
+        )
     rlbench_env.launch()
 
     task_env = None
@@ -279,6 +290,13 @@ def run(i, lock, task_index, variation_count, results, file_lock, tasks, args):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="RLBench Dataset Generator")
+    parser.add_argument(
+        "--arm_action_mode",
+        type=str,
+        choices=["joint_position", "end_effector_pose"],
+        default="joint_position",
+        help="The arm action mode to use.",
+    )
     parser.add_argument(
         "--save_path",
         type=str,
