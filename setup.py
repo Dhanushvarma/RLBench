@@ -51,5 +51,5 @@ setup(name='rlbench',
           "console_scripts": [
               "rlbench-generate-dataset = rlbench.dataset_generator:main"
           ]
-      }
+      },
 )
